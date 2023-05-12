@@ -7,7 +7,6 @@ import Test from "./pages/Test";
 
 function App() {
   const { username } = useContext(UserContext);
-  console.log("username :", username);
 
   return (
     <BrowserRouter>
