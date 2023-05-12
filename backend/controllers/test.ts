@@ -8,3 +8,9 @@ export async function create(req: Request, res: Response) {
 
   return res.json(test);
 }
+
+export async function getLeaderBoard(req: Request, res: Response) {
+  const tests = await Test.find({}, {}, { sort: "-accuracy", limit: 10 });
+
+  return res.json(tests);
+}
