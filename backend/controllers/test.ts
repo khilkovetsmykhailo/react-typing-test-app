@@ -10,7 +10,7 @@ export async function create(req: Request, res: Response) {
 }
 
 export async function getLeaderBoard(req: Request, res: Response) {
-  const tests = await Test.find({}, {}, { sort: "-accuracy", limit: 10 });
+  const tests = await Test.find().sort({ wpm: -1, accuracy: -1 }).limit(10);
 
   return res.json(tests);
 }
