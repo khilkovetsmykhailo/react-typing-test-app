@@ -1,8 +1,12 @@
-import { ChangeEvent, useCallback, useEffect, useMemo, useState, Fragment } from "react";
+import { ChangeEvent, useCallback, useEffect, useMemo, useState, Fragment, useContext } from "react";
 import randomWords from "random-words";
 import useElapsedTime from "../hooks/useElapsedTime";
+import { saveTestResult } from "../api";
+import { UserContext } from "../components/UserProvider";
 
 const Test = () => {
+  const { username } = useContext(UserContext);
+
   const [words, setWords] = useState<string[]>([]);
   const [typed, setTyped] = useState("");
   const { startTimer, elapsed, started, stopTimer } = useElapsedTime();
@@ -36,10 +40,6 @@ const Test = () => {
     }
   }, [finished]);
 
-  const handleTextChange = useCallback((e: ChangeEvent<HTMLTextAreaElement>) => {
-    setTyped(e.target.value);
-  }, []);
-
   const { wrongCharsIndex, wordCount } = useMemo(() => {
     const diff = [];
     let wordCount = 0;
@@ -51,7 +51,7 @@ const Test = () => {
         diff.push(i);
         wordCorrect = false;
       } else {
-        if (typed[i] === " " || i === paragraph.length) {
+        if (typed[i] === " " || i === paragraph.length - 1) {
           if (wordCorrect) {
             wordCount++;
           }
@@ -65,7 +65,7 @@ const Test = () => {
 
   const wpm = useMemo(() => {
     if (elapsed === "0") {
-      return 0;
+      return "0";
     }
 
     return ((wordCount / parseInt(elapsed)) * 60).toFixed(0);
@@ -93,13 +93,49 @@ const Test = () => {
     return spanArray;
   }, [wrongCharsIndex, typed, paragraph]);
 
+  const handleTextChange = useCallback((e: ChangeEvent<HTMLTextAreaElement>) => {
+    setTyped(e.target.value);
+  }, []);
+
+  const handleSubmitResult = async () => {
+    await saveTestResult({
+      user: username,
+      accuracy: ((wordCount / words.length) * 100).toFixed(0) + "%",
+      wordCount,
+      characterCount: paragraph.length - wrongCharsIndex.length,
+      wpm: parseInt(wpm),
+    });
+  };
+
   return (
     <div className="flex flex-col mt-8">
       <div className="flex flex-row justify-between">
-        <div>Timer: {elapsed}</div>
-        <div>Word Count: {wordCount}</div>
-        <div>Character Count: {typed.length - wrongCharsIndex.length}</div>
-        <div>WPM: {wpm}</div>
+        <div className="flex flex-col">
+          <div>
+            <span className="text-lg font-semibold">Timer:</span> {elapsed}
+          </div>
+
+          {finished ? (
+            <div className="flex flex-row gap-4 mt-4">
+              <button className="bg-green-600 px-2 py-1 rounded-md h-fit text-white">Restart Test</button>
+              <button onClick={handleSubmitResult} className="bg-blue-600 px-2 py-1 rounded-md h-fit text-white">
+                Save test result
+              </button>
+            </div>
+          ) : null}
+        </div>
+
+        <div className="flex flex-col">
+          <div>
+            <span className="text-lg font-semibold">Word Count:</span> {wordCount}
+          </div>
+          <div>
+            <span className="text-lg font-semibold">Character Count:</span> {typed.length - wrongCharsIndex.length}
+          </div>
+          <div>
+            <span className="text-lg font-semibold">WPM:</span> {wpm}
+          </div>
+        </div>
       </div>
 
       <div className="w-full border rounded-xl border-gray-200 p-4 text-xl mt-4 tracking-wider leading-8 bg-slate-200">
