@@ -3,6 +3,7 @@ import randomWords from "random-words";
 import useElapsedTime from "../hooks/useElapsedTime";
 import { saveTestResult } from "../api";
 import { UserContext } from "../components/UserProvider";
+import { Link } from "react-router-dom";
 
 const Test = () => {
   const { username } = useContext(UserContext);
@@ -11,6 +12,7 @@ const Test = () => {
   const [typed, setTyped] = useState("");
   const { startTimer, elapsed, started, stopTimer } = useElapsedTime();
   const [finished, setFinished] = useState(false);
+  const [resultSaved, setResultSaved] = useState(false);
 
   useEffect(() => {
     const words = randomWords(10);
@@ -105,10 +107,24 @@ const Test = () => {
       characterCount: paragraph.length - wrongCharsIndex.length,
       wpm: parseInt(wpm),
     });
+
+    setResultSaved(true);
+  };
+
+  const handleRestart = () => {
+    setFinished(false);
+    setResultSaved(false);
+    setTyped("");
+    setWords(randomWords(10));
   };
 
   return (
     <div className="flex flex-col mt-8">
+      <div>
+        <Link to="/">
+          <span className="text-purple-600 underline">Go back to leader board</span>
+        </Link>
+      </div>
       <div className="flex flex-row justify-between">
         <div className="flex flex-col">
           <div>
@@ -117,10 +133,14 @@ const Test = () => {
 
           {finished ? (
             <div className="flex flex-row gap-4 mt-4">
-              <button className="bg-green-600 px-2 py-1 rounded-md h-fit text-white">Restart Test</button>
-              <button onClick={handleSubmitResult} className="bg-blue-600 px-2 py-1 rounded-md h-fit text-white">
-                Save test result
+              <button onClick={handleRestart} className="bg-green-600 px-2 py-1 rounded-md h-fit text-white">
+                Restart Test
               </button>
+              {!resultSaved && (
+                <button onClick={handleSubmitResult} className="bg-blue-600 px-2 py-1 rounded-md h-fit text-white">
+                  Save test result
+                </button>
+              )}
             </div>
           ) : null}
         </div>
@@ -142,6 +162,7 @@ const Test = () => {
         <p>{paragraphElement}</p>
 
         <textarea
+          autoFocus
           value={typed}
           onChange={handleTextChange}
           className="w-full border-none mt-4 text-xl bg-white tracking-wider leading-8 h-40"
